@@ -17,32 +17,40 @@ const LoginPage = () => {
     try {
       setLoading(true);
       
-      // 1. Gọi API Login (POST /api/auth/login)
-      const loginRes: any = await axiosClient.post('/api/auth/login', values);
+      // --- ĐOẠN CODE GỌI API THẬT (TẠM THỜI COMMENT LẠI) ---
+      // const loginRes: any = await axiosClient.post('/api/auth/login', values);
+      // const token = loginRes.token || loginRes.data?.token; 
+      // localStorage.setItem('token', token);
+      // const profileRes: any = await axiosClient.get('/api/auth/profile');
+      // const user = profileRes.data || profileRes;
       
-      // Lưu ý: Cần kiểm tra cấu trúc Swagger xem token nằm ở đâu (vd: loginRes.token hay loginRes.data.token)
-      const token = loginRes.token || loginRes.data?.token; 
-      
-      if (!token) throw new Error("Không nhận được token từ server");
+      // --- ĐOẠN CODE MOCK DATA (GIẢ LẬP) ---
+      // 1. Giả lập thời gian chờ mạng 1 giây cho giống thật
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Lưu tạm token vào localStorage để axiosClient tự động đính kèm vào header cho API Profile
-      localStorage.setItem('token', token);
+      // 2. Tự động set Role dựa vào email người dùng gõ
+      let mockRole = 'Staff'; // Mặc định là nhân viên
+      if (values.email.includes('admin')) mockRole = 'Admin';
+      if (values.email.includes('manager')) mockRole = 'Manager';
 
-      // 2. Gọi API Profile (GET /api/auth/profile)
-      const profileRes: any = await axiosClient.get('/api/auth/profile');
-      const user = profileRes.data || profileRes;
+      // 3. Tạo dữ liệu giả
+      const mockToken = 'fake-jwt-token-12345';
+      const mockUser = { 
+        id: 1, 
+        name: 'Người dùng Test', 
+        email: values.email, 
+        role: mockRole 
+      };
 
-      // 3. Đưa Token và thông tin User vào kho lưu trữ Redux
-      dispatch(setCredentials({ token, user }));
+      // 4. Đưa vào Redux và LocalStorage như bình thường
+      localStorage.setItem('token', mockToken);
+      dispatch(setCredentials({ token: mockToken, user: mockUser }));
 
-      message.success('Đăng nhập thành công!');
-      
-      // 4. Chuyển hướng vào trang trong
+      message.success(`Đăng nhập giả lập thành công với quyền: ${mockRole}`);
       navigate('/requisitions/my');
       
     } catch (error) {
-      message.error('Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu!');
-      // Nếu lỗi, xóa token rác đi
+      message.error('Đăng nhập thất bại!');
       localStorage.removeItem('token');
     } finally {
       setLoading(false);
