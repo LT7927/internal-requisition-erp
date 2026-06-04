@@ -1,55 +1,65 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import MainLayout from '../layouts/MainLayout';
-import LoginPage from '../pages/auth/LoginPage';
 import NotFoundPage from '../pages/errors/NotFoundPage';
 import ForbiddenPage from '../pages/errors/ForbiddenPage';
 import ServerErrorPage from '../pages/errors/ServerErrorPage';
 import PublicRoute from './PublicRoute';
 import ProtectedRoute from './ProtectedRoute';
-
-// Component tạm thời (Mock) cho các trang sẽ làm ở Bước 5 & 6
-const MyRequisitions = () => <div>Giao diện Danh sách yêu cầu của tôi (Đang xây dựng)</div>;
-const PendingApprovals = () => <div>Giao diện Chờ duyệt (Đang xây dựng)</div>;
-const DepartmentManagement = () => <div>Giao diện Quản lý phòng ban (Đang xây dựng)</div>;
+import { routeConfig } from './routeConfig';
 
 const AppRouter = () => {
   return (
     <Routes>
-      {/* 1. Vùng Public (Chỉ dành cho người chưa đăng nhập) */}
+      {/* ================= 1. VÙNG PUBLIC ROUTES ================= */}
       <Route element={<PublicRoute />}>
         <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
+          {routeConfig.publicRoutes.map((route) => (
+            <Route 
+              key={route.path} 
+              path={route.path} 
+              element={<route.component />} 
+            />
+          ))}
         </Route>
       </Route>
 
-      {/* 2. Vùng Protected (Cần phải đăng nhập) */}
+      {/* ================= 2. VÙNG PROTECTED ROUTES ================= */}
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           
-          {/* Tự động chuyển hướng từ gốc (/) sang trang danh sách */}
+          {/* Tự động điều hướng từ trang gốc (/) sang trang mặc định của Staff */}
           <Route path="/" element={<Navigate to="/requisitions/my" replace />} />
-          
-          {/* Cấp độ Staff (Ai đăng nhập vào cũng xem được) */}
-          <Route path="/requisitions/my" element={<MyRequisitions />} />
 
-          {/* Cấp độ Manager & Admin (Staff không được vào) */}
-          <Route element={<ProtectedRoute allowedRoles={['Manager', 'Admin']} />}>
-            <Route path="/approvals/pending" element={<PendingApprovals />} />
-          </Route>
+          {/* Vòng lặp tự động rải và phân quyền cho từng trang nội bộ */}
+          {routeConfig.protectedRoutes.map((route) => {
+            // Nếu route có quy định quyền (allowedRoles), bọc thêm 1 lớp ProtectedRoute riêng cho nó
+            if (route.allowedRoles) {
+              return (
+                <Route
+                  key={route.path}
+                  element={<ProtectedRoute allowedRoles={route.allowedRoles} />}
+                >
+                  <Route path={route.path} element={<route.component />} />
+                </Route>
+              );
+            }
 
-          {/* Cấp độ Admin tối cao (Quản lý Master Data) */}
-          <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
-            <Route path="/categories/departments" element={<DepartmentManagement />} />
-          </Route>
-
+            // Nếu route không quy định quyền, ai đăng nhập cũng vào được
+            return (
+              <Route 
+                key={route.path} 
+                path={route.path} 
+                element={<route.component />} 
+              />
+            );
+          })}
         </Route>
       </Route>
 
-      {/* 3. Vùng Lỗi (Nằm ngoài cùng, ai vào cũng được) */}
+      {/* ================= 3. VÙNG HỆ THỐNG LỖI ================= */}
       <Route path="/403" element={<ForbiddenPage />} />
       <Route path="/500" element={<ServerErrorPage />} />
-      {/* Bắt mọi URL gõ sai khác bằng trang 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
