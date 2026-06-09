@@ -3,11 +3,12 @@ import LoginPage from '../pages/auth/LoginPage';
 import NotFoundPage from '../pages/errors/NotFoundPage';
 import ForbiddenPage from '../pages/errors/ForbiddenPage';
 import ServerErrorPage from '../pages/errors/ServerErrorPage';
+import DepartmentPage from '../pages/department/DepartmentPage';
 
 // Component tạm thời (Mock) cho các trang ở Bước 5 & 6
 const MyRequisitions = () => React.createElement('div', null, 'Giao diện Danh sách yêu cầu của tôi (Đang xây dựng)');
 const PendingApprovals = () => React.createElement('div', null, 'Giao diện Chờ duyệt (Đang xây dựng)');
-const DepartmentManagement = () => React.createElement('div', null, 'Giao diện Quản lý phòng ban (Đang xây dựng)');
+// const DepartmentManagement = () => React.createElement('div', null, 'Giao diện Quản lý phòng ban (Đang xây dựng)');
 
 // Định nghĩa kiểu dữ liệu cho một Tuyến đường
 export interface RouteItem {
@@ -32,6 +33,6 @@ export const routeConfig: LayoutRouteConfig = {
   protectedRoutes: [
     { path: '/requisitions/my', component: MyRequisitions },
     { path: '/approvals/pending', component: PendingApprovals, allowedRoles: ['Manager', 'Admin'] },
-    { path: '/categories/departments', component: DepartmentManagement, allowedRoles: ['Admin'] }
+    { path: '/categories/departments', component: DepartmentPage, allowedRoles: ['Admin'] }
   ]
 };
