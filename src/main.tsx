@@ -4,7 +4,7 @@ import App from './App.tsx';
 import { Provider } from 'react-redux';
 import { store } from './store/store.ts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App as AntdApp } from 'antd';
 
 // Khởi tạo QueryClient cho TanStack
 const queryClient = new QueryClient({
@@ -18,13 +18,13 @@ const queryClient = new QueryClient({
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {/* Redux Provider */}
     <Provider store={store}>
-      {/* TanStack Query Provider */}
       <QueryClientProvider client={queryClient}>
-        {/* Ant Design Theme Provider (Có thể custom màu ở đây) */}
         <ConfigProvider theme={{ token: { colorPrimary: '#1677ff' } }}>
-          <App />
+          {/* Bọc AntdApp ra ngoài cùng */}
+          <AntdApp>
+            <App /> 
+          </AntdApp>
         </ConfigProvider>
       </QueryClientProvider>
     </Provider>
