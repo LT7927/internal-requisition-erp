@@ -14,10 +14,17 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Lớp bảo vệ 2: Đã đăng nhập nhưng không đủ quyền -> ném ra trang 403
-  // Giả định backend trả về thuộc tính role trong user (VD: user.role = 'Staff')
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/403" replace />;
+  // Lớp bảo vệ 2: Phân quyền Role (Xử lý triệt để hoa/thường)
+  if (allowedRoles && user) {
+    // Ép role của user từ Backend thành chữ IN HOA
+    const userRole = user.role ? String(user.role).toUpperCase() : '';
+    
+    // Kiểm tra xem role của user có nằm trong danh sách cho phép không (cũng ép IN HOA để so sánh)
+    const isAllowed = allowedRoles.some((role) => role.toUpperCase() === userRole);
+
+    if (!isAllowed) {
+      return <Navigate to="/403" replace />;
+    }
   }
 
   // Hợp lệ toàn bộ -> Cho phép đi tiếp vào giao diện trang
