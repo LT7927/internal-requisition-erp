@@ -1,43 +1,70 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Form, Button, Row, Col } from 'antd';
+import { zodResolver } from '@hookform/resolvers/zod'; 
+import { Form, Button, Row, Col, message } from 'antd';
 import { DynamicFormProps } from './formTypes';
 import { FormFieldRenderer } from './FormFields';
+import axiosClient from '../../utils/axiosClient';
 
 const DynamicForm = ({
   fields,
+  schema, 
+  apiEndpoint,
+  method = 'POST', 
   onSubmit,
+  onSuccess,
   submitBtnText = 'Lưu dữ liệu',
-  loading = false,
   initialValues,
 }: DynamicFormProps) => {
   
-  // Khởi tạo React Hook Form
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const { control, handleSubmit, reset } = useForm({
     defaultValues: initialValues || {},
+    resolver: schema ? zodResolver(schema) : undefined, 
   });
 
-  // Theo dõi nếu dữ liệu ban đầu (initialValues) thay đổi (VD: khi API lấy data sửa về muộn), tự động rải lại vào form
   useEffect(() => {
-    if (initialValues) {
-      reset(initialValues);
-    }
+    if (initialValues) reset(initialValues);
   }, [initialValues, reset]);
 
+  const handleInternalSubmit = async (data: any) => {
+    if (onSubmit) {
+      return onSubmit(data);
+    }
+
+    if (apiEndpoint) {
+      setIsSubmitting(true);
+      try {
+        if (method === 'POST') {
+          await axiosClient.post(apiEndpoint, data);
+        } else {
+          await axiosClient.put(apiEndpoint, data);
+        }
+        message.success('Thao tác thành công!');
+        if (onSuccess) onSuccess();
+      } catch (error: any) {
+        message.error(error.response?.data?.message || 'Có lỗi xảy ra khi lưu dữ liệu');
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      console.warn("DynamicForm: Thiếu apiEndpoint hoặc onSubmit");
+    }
+  };
+
   return (
-    <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
+    <Form layout="vertical" onFinish={handleSubmit(handleInternalSubmit)}>
       <Row gutter={[16, 0]}>
         {fields.map((field) => (
-          // Sử dụng thuộc tính 'span' từ JSON để chia cột (Mặc định full màn hình = 24)
           <Col key={field.name} span={field.span || 24}>
             <FormFieldRenderer fieldConfig={field} control={control} />
           </Col>
         ))}
       </Row>
 
-      {/* Khu vực nút bấm Submit hành động */}
       <Form.Item style={{ marginTop: 16 }}>
-        <Button type="primary" htmlType="submit" loading={loading} block>
+        <Button type="primary" htmlType="submit" loading={isSubmitting} block>
           {submitBtnText}
         </Button>
       </Form.Item>
