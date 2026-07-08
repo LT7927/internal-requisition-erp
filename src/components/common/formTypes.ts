@@ -1,6 +1,5 @@
 import { ZodType } from 'zod';
 
-// Thêm 'checkbox-group' vào danh sách hỗ trợ
 export type FormFieldType = 'text' | 'password' | 'email' | 'number' | 'select' | 'checkbox' | 'checkbox-group' | 'radio' | 'textarea';
 
 export interface FormFieldConfig {
@@ -8,17 +7,23 @@ export interface FormFieldConfig {
   label: string;              
   type: FormFieldType;        
   placeholder?: string;       
-  options?: { label: string; value: any }[];
-  apiEndpoint?: string; 
+  options?: { label: string; value: any }[]; 
+  apiEndpoint?: string;       
   disabled?: boolean;         
   span?: number;              
 }
 
 export interface DynamicFormProps {
   fields: FormFieldConfig[];        
-  onSubmit: (data: any) => void;    
-  schema?: ZodType<any, any, any>; 
+  schema?: ZodType<any, any, any>;  
+  
+  // [NÂNG CẤP]: Thêm cấu hình API để Form tự động gửi dữ liệu
+  apiEndpoint?: string;             // VD: '/api/categories/departments'
+  method?: 'POST' | 'PUT';          // Phương thức gửi (Tạo mới hay Cập nhật)
+  
+  onSubmit?: (data: any) => void;   // Vẫn giữ lại dự phòng nếu muốn tự xử lý
+  onSuccess?: () => void;           // Hàm chạy khi Form gọi API thành công (để đóng Modal, load lại bảng...)
+  
   submitBtnText?: string;           
-  loading?: boolean;                
   initialValues?: any;              
 }
