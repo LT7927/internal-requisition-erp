@@ -3,10 +3,12 @@ import { Table, Input, Space, Select } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import axiosClient from '../../utils/axiosClient';
+// Import thêm FilterConfig để định dạng đúng kiểu dữ liệu
 import { DynamicTableProps, FilterConfig } from './tableTypes';
 import useDebounce from '../../hooks/useDebounce';
 
 const DynamicTable = ({ config }: DynamicTableProps) => {
+  // Rút trích dữ liệu từ bên trong cục config ra
   const { apiEndpoint, columns, filterConfigs = [], rowKey = 'id' } = config;
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,6 +33,7 @@ const DynamicTable = ({ config }: DynamicTableProps) => {
       searchParams.delete('search');
     }
     setSearchParams(searchParams);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchTerm]); 
 
   const handleFilterChange = (filterName: string, value: any) => {
@@ -86,6 +89,7 @@ const DynamicTable = ({ config }: DynamicTableProps) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         
         <Space wrap>
+          {/* Đã thêm (filter: FilterConfig) để hết báo lỗi implicit any */}
           {filterConfigs.map((filter: FilterConfig) => (
             <Select
               key={filter.name}
