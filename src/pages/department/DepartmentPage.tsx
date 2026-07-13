@@ -1,182 +1,150 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Modal, Space, message, Popconfirm, Tooltip } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
-import axiosClient from '../../utils/axiosClient';
+import { useState, useMemo } from 'react';
+import { Card, Button, Space, Tooltip, Modal, Drawer, Descriptions, message } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { useSearchParams } from 'react-router-dom';
 import DynamicTable from '../../components/common/DynamicTable';
-import { TableParams } from '../../components/common/tableTypes';
-import DepartmentForm from './DepartmentForm';
-import DepartmentDetail from './DepartmentDetail';
+import DynamicForm from '../../components/common/DynamicForm';
+import axiosClient from '../../utils/axiosClient';
+import { departmentTableConfig, departmentFormFields, departmentSchema, DEPARTMENT_API } from './departmentConfig';
+
+const { confirm } = Modal;
 
 const DepartmentPage = () => {
-  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
 
-  // 1. Quản lý State bộ lọc và phân trang (Truyền xuống Table Common)
-  const [params, setParams] = useState<TableParams>({
-    page: 1,
-    pageSize: 10,
-    search: undefined,
-    filters: undefined,
-  });
+  const handleCreateNew = () => {
+    setModalMode('create');
+    setSelectedRecord(null);
+    setIsModalVisible(true);
+  };
 
-  // Các State quản lý trạng thái Đóng/Mở các Modal hội thoại UI
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [editingDepartment, setEditingDepartment] = useState<any | null>(null);
-  const [viewingDepartmentId, setViewingDepartmentId] = useState<string | null>(null);
+  const handleEdit = (record: any) => {
+    setModalMode('edit');
+    setSelectedRecord(record);
+    setIsModalVisible(true);
+  };
 
-  // ================= 2. GỌI API BẰNG TANSTACK QUERY (GET LIST) =================
-  const { data, isLoading } = useQuery({
-    queryKey: ['departments', params], // Mỗi khi params đổi, TanStack tự động fetch lại API mới
-    queryFn: async () => {
-      const response: any = await axiosClient.get('/api/categories/departments', {
-        params: {
-          page: params.page,
-          limit: params.pageSize,
-          search: params.search,
+  const handleView = (record: any) => {
+    setSelectedRecord(record);
+    setIsDrawerVisible(true);
+  };
+
+  const triggerTableRefresh = () => {
+    searchParams.set('t', Date.now().toString());
+    setSearchParams(searchParams);
+  };
+
+  const handleFormSuccess = () => {
+    setIsModalVisible(false);
+    triggerTableRefresh();
+  };
+
+  const handleDelete = (record: any) => {
+    confirm({
+      title: 'Xác nhận xóa phòng ban',
+      icon: <ExclamationCircleOutlined />,
+      content: `Bạn có chắc chắn muốn xóa phòng ban [${record.code}] - ${record.name} không?`,
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      async onOk() {
+        try {
+          await axiosClient.delete(`${DEPARTMENT_API}/${record.id}`);
+          message.success('Xóa phòng ban thành công!');
+          triggerTableRefresh();
+        } catch (error: any) {
+          message.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa');
+        }
+      },
+    });
+  };
+
+  const tableConfigWithActions = useMemo(() => {
+    return {
+      ...departmentTableConfig,
+      columns: [
+        ...departmentTableConfig.columns,
+        {
+          title: 'Hành động',
+          key: 'actions',
+          width: 180,
+          align: 'center' as const,
+          render: (_: any, record: any) => (
+            <Space size="middle">
+              <Tooltip title="Xem chi tiết">
+                <Button type="text" icon={<EyeOutlined />} style={{ color: '#1677ff' }} onClick={() => handleView(record)} />
+              </Tooltip>
+              <Tooltip title="Chỉnh sửa">
+                <Button type="text" icon={<EditOutlined />} style={{ color: '#faad14' }} onClick={() => handleEdit(record)} />
+              </Tooltip>
+              <Tooltip title="Xóa">
+                <Button type="text" icon={<DeleteOutlined />} danger onClick={() => handleDelete(record)} />
+              </Tooltip>
+            </Space>
+          ),
         },
-      });
-      return response; // Giả định backend trả về cấu hình: { data: [...], total: 45 }
-    },
-  });
-
-  // Lấy chi tiết một phòng ban (bao gồm list user) khi click xem chi tiết
-  const { data: detailData, isLoading: isDetailLoading } = useQuery({
-    queryKey: ['department-detail', viewingDepartmentId],
-    queryFn: async () => {
-      if (!viewingDepartmentId) return null;
-      return await axiosClient.get(`/api/categories/departments/${viewingDepartmentId}`);
-    },
-    enabled: !!viewingDepartmentId, // Chỉ tự kích hoạt gọi API khi biến id này có giá trị cụ thể
-  });
-
-  // ================= 3. XỬ LÝ MUTATIONS (POST, PUT, DELETE) =================
-  // Mutation xử lý việc Thêm mới hoặc Cập nhật phòng ban
-  const saveMutation = useMutation({
-    mutationFn: async (formData: any) => {
-      if (editingDepartment) {
-        // Nếu có data cũ -> Đang sửa (PUT /api/categories/departments/{id})
-        return await axiosClient.put(`/api/categories/departments/${editingDepartment.id}`, formData);
-      } else {
-        // Không có data cũ -> Đang thêm mới (POST /api/categories/departments - Admin only)
-        return await axiosClient.post('/api/categories/departments', formData);
-      }
-    },
-    onSuccess: () => {
-      message.success(editingDepartment ? 'Cập nhật phòng ban thành công!' : 'Tạo mới phòng ban thành công!');
-      setIsFormModalOpen(false);
-      setEditingDepartment(null);
-      // Ép lệnh cho TanStack Query làm tươi lại bộ nhớ đệm, tự động reload lại bảng dữ liệu
-      queryClient.invalidateQueries({ queryKey: ['departments'] });
-    },
-    onError: () => message.error('Đã xảy ra lỗi khi lưu dữ liệu!'),
-  });
-
-  // Mutation xử lý việc Xóa một phòng ban (DELETE /api/categories/departments/{id})
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => await axiosClient.delete(`/api/categories/departments/${id}`),
-    onSuccess: () => {
-      message.success('Xóa phòng ban thành công!');
-      queryClient.invalidateQueries({ queryKey: ['departments'] });
-    },
-    onError: () => message.error('Không thể xóa phòng ban này!'),
-  });
-
-  // ================= 4. ĐỊNH NGHĨA CÁC CỘT HIỂN THỊ CỦA BẢNG =================
-  const columns = [
-    { title: 'Mã phòng ban', dataIndex: 'code', key: 'code', width: '20%' },
-    { title: 'Tên phòng ban', dataIndex: 'name', key: 'name', width: '30%' },
-    { title: 'Mô tả', dataIndex: 'description', key: 'description', width: '35%' },
-    {
-      title: 'Hành động',
-      key: 'action',
-      width: '15%',
-      render: (_: any, record: any) => (
-        <Space size="middle">
-          <Tooltip title="Xem chi tiết">
-            <Button 
-              type="text" 
-              icon={<EyeOutlined />} 
-              onClick={() => { setViewingDepartmentId(record.id); setIsDetailModalOpen(true); }} 
-            />
-          </Tooltip>
-          <Tooltip title="Chỉnh sửa (Admin only)">
-            <Button 
-              type="text" 
-              icon={<EditOutlined style={{ color: '#1890ff' }} />} 
-              onClick={() => { setEditingDepartment(record); setIsFormModalOpen(true); }} 
-            />
-          </Tooltip>
-          <Tooltip title="Xóa phòng ban">
-            <Popconfirm
-              title="Bạn có chắc chắn muốn xóa phòng ban này không?"
-              onConfirm={() => deleteMutation.mutate(record.id)}
-              okText="Có"
-              cancelText="Hủy"
-            >
-              <Button type="text" icon={<DeleteOutlined style={{ color: '#ff4d4f' }} />} />
-            </Popconfirm>
-          </Tooltip>
-        </Space>
-      ),
-    },
-  ];
+      ],
+    };
+  }, []);
 
   return (
-    <Card 
-      title="QUẢN LÝ DANH MỤC PHÒNG BAN" 
-      extra={
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
-          onClick={() => { setEditingDepartment(null); setIsFormModalOpen(true); }}
-        >
-          Thêm phòng ban mới
-        </Button>
-      }
-    >
-      {/* RÁP NỐI TABLE COMMON VÀO ĐÂY */}
-      <DynamicTable
-        columns={columns}
-        dataSource={data?.data || []} // Đổ mảng dữ liệu lấy từ API
-        totalItems={data?.total || 0} // Tổng số lượng bản ghi thực tế để tính số trang
-        isLoading={isLoading}
-        params={params}
-        onParamsChange={setParams} // Hàm đồng bộ hóa khi user search hoặc phân trang
-        searchPlaceholder="Tìm kiếm theo tên hoặc mã..."
-      />
-
-      {/* MODAL CHỨA FORM THÊM / SỬA PHÒNG BAN */}
-      <Modal
-        title={editingDepartment ? "CẬP NHẬT PHÒNG BAN" : "THÊM PHÒNG BAN MỚI"}
-        open={isFormModalOpen}
-        onCancel={() => { setIsFormModalOpen(false); setEditingDepartment(null); }}
-        footer={null} // Ẩn nút default footer để dùng nút Submit của Form Common điều khiển
-        destroyOnClose // Tự động hủy xóa form khi đóng modal để xóa trắng dữ liệu thừa
+    <>
+      <Card 
+        title="QUẢN LÝ PHÒNG BAN" 
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateNew}>
+            Thêm Phòng Ban
+          </Button>
+        }
+        style={{ borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
       >
-        <DepartmentForm 
-          onSubmit={(formData) => saveMutation.mutate(formData)} 
-          initialValues={editingDepartment}
-          loading={saveMutation.isPending}
+        <DynamicTable config={tableConfigWithActions} />
+      </Card>
+
+      <Modal
+        title={modalMode === 'create' ? 'THÊM PHÒNG BAN MỚI' : 'CẬP NHẬT PHÒNG BAN'}
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+        destroyOnClose 
+      >
+        <DynamicForm 
+          fields={departmentFormFields}
+          schema={departmentSchema}
+          apiEndpoint={modalMode === 'create' ? DEPARTMENT_API : `${DEPARTMENT_API}/${selectedRecord?.id}`}
+          method={modalMode === 'create' ? 'POST' : 'PUT'}
+          initialValues={selectedRecord}
+          onSuccess={handleFormSuccess}
+          submitBtnText={modalMode === 'create' ? 'Tạo mới' : 'Lưu thay đổi'}
         />
       </Modal>
 
-      {/* MODAL CHỨA CHI TIẾT PHÒNG BAN VÀ LIST USER */}
-      <Modal
-        title="CHI TIẾT PHÒNG BAN & NHÂN SỰ"
-        open={isDetailModalOpen}
-        onCancel={() => { setIsDetailModalOpen(false); setViewingDepartmentId(null); }}
-        footer={[
-          <Button key="close" onClick={() => { setIsDetailModalOpen(false); setViewingDepartmentId(null); }}>
-            Đóng lại
-          </Button>
-        ]}
-        width={650}
-        loading={isDetailLoading}
+      <Drawer
+        title="CHI TIẾT PHÒNG BAN"
+        placement="right"
+        onClose={() => setIsDrawerVisible(false)}
+        open={isDrawerVisible}
+        width={450}
       >
-        <DepartmentDetail departmentData={detailData} />
-      </Modal>
-    </Card>
+        {selectedRecord && (
+          <Descriptions column={1} bordered size="middle">
+            <Descriptions.Item label="Mã Phòng" labelStyle={{ width: '120px', fontWeight: 'bold' }}>
+              {selectedRecord.code}
+            </Descriptions.Item>
+            <Descriptions.Item label="Tên Phòng" labelStyle={{ fontWeight: 'bold' }}>
+              {selectedRecord.name}
+            </Descriptions.Item>
+            <Descriptions.Item label="Mô tả" labelStyle={{ fontWeight: 'bold' }}>
+              {selectedRecord.description || 'Không có mô tả'}
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+      </Drawer>
+    </>
   );
 };
 
