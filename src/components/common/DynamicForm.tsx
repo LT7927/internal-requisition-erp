@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod'; 
-import { Form, Button, Row, Col, message } from 'antd'; // Thêm message
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, Button, Row, Col, message } from 'antd';
 import { DynamicFormProps } from './formTypes';
 import { FormFieldRenderer } from './FormFields';
-import axiosClient from '../../utils/axiosClient'; // Thêm Axios
+import axiosClient from '../../utils/axiosClient';
 
 const DynamicForm = ({
   fields,
   schema, 
-  apiEndpoint, // Nhận API
-  method = 'POST', // Mặc định là POST
+  apiEndpoint, 
+  method = 'POST', 
   onSubmit,
   onSuccess,
   submitBtnText = 'Lưu dữ liệu',
@@ -28,14 +28,13 @@ const DynamicForm = ({
     if (initialValues) reset(initialValues);
   }, [initialValues, reset]);
 
-  // [NÂNG CẤP LÕI]: Hàm tự động xử lý API
+  // Giải quyết lỗi undefined: Định nghĩa hàm này để đảm bảo handleSubmit luôn nhận được 1 function hợp lệ
   const handleInternalSubmit = async (data: any) => {
-    // Nếu cha có truyền hàm onSubmit thì ưu tiên hàm của cha
     if (onSubmit) {
-      return onSubmit(data);
+      onSubmit(data);
+      return;
     }
 
-    // Nếu có cấu hình API, Form tự động làm nhiệm vụ
     if (apiEndpoint) {
       setIsSubmitting(true);
       try {
@@ -45,7 +44,7 @@ const DynamicForm = ({
           await axiosClient.put(apiEndpoint, data);
         }
         message.success('Thao tác thành công!');
-        if (onSuccess) onSuccess(); // Gọi ngược ra ngoài báo thành công
+        if (onSuccess) onSuccess(); 
       } catch (error: any) {
         message.error(error.response?.data?.message || 'Có lỗi xảy ra khi lưu dữ liệu');
       } finally {

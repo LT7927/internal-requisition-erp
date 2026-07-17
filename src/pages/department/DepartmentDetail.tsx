@@ -1,13 +1,12 @@
 import { Descriptions, Table, Tag, Typography } from 'antd';
 
 interface DepartmentDetailProps {
-  departmentData: any; // Dữ liệu phòng ban chi tiết từ API trả về
+  departmentData: any;
 }
 
 const DepartmentDetail = ({ departmentData }: DepartmentDetailProps) => {
   if (!departmentData) return <div>Không có dữ liệu phòng ban</div>;
 
-  // Định nghĩa các cột hiển thị danh sách nhân viên thuộc phòng ban đó
   const userColumns = [
     { title: 'Họ và tên', dataIndex: 'name', key: 'name' },
     { title: 'Email', dataIndex: 'email', key: 'email' },
@@ -38,7 +37,7 @@ const DepartmentDetail = ({ departmentData }: DepartmentDetailProps) => {
       <Table 
         columns={userColumns} 
         dataSource={departmentData.users || []} 
-        pagination={false} // Tắt phân trang cục bộ bên trong chi tiết
+        pagination={false}
         size="small"
         bordered
       />

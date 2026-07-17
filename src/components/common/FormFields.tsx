@@ -12,12 +12,12 @@ interface FieldRendererProps {
 }
 
 export const FormFieldRenderer = ({ fieldConfig, control }: FieldRendererProps) => {
-  // Đã xóa hoàn toàn chữ 'rules' ở đây
   const { name, label, type, placeholder, options, apiEndpoint, disabled } = fieldConfig;
   
   const [dynamicOptions, setDynamicOptions] = useState<{label: string, value: any}[]>(options || []);
   const [isLoading, setIsLoading] = useState(false);
 
+  // apiEndpoint được sử dụng ở đây, giải quyết lỗi "is declared but its value is never read"
   useEffect(() => {
     if (type === 'select' && apiEndpoint) {
       const fetchOptions = async () => {
@@ -46,7 +46,6 @@ export const FormFieldRenderer = ({ fieldConfig, control }: FieldRendererProps) 
     <Controller
       name={name}
       control={control}
-      // ĐÃ XÓA dòng rules={rules} VÌ GIỜ CHÚNG TA XÀI ZOD BÊN NGOÀI
       render={({ field, fieldState: { error } }) => {
         const renderComponent = () => {
           switch (type) {

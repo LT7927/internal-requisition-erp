@@ -3,26 +3,20 @@ import { Table, Input, Space, Select } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import axiosClient from '../../utils/axiosClient';
-// Import thêm FilterConfig để định dạng đúng kiểu dữ liệu
 import { DynamicTableProps, FilterConfig } from './tableTypes';
 import useDebounce from '../../hooks/useDebounce';
 
 const DynamicTable = ({ config }: DynamicTableProps) => {
-  // Rút trích dữ liệu từ bên trong cục config ra
   const { apiEndpoint, columns, filterConfigs = [], rowKey = 'id' } = config;
-
   const [searchParams, setSearchParams] = useSearchParams();
-  
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [total, setTotal] = useState<number>(0);
 
   const currentPage = Number(searchParams.get('page')) || 1;
-  const pageSize = Number(searchParams.get('limit')) || 10;
-  
+  const pageSize = Number(searchParams.get('limit')) || 10;  
   const initialSearch = searchParams.get('search') || '';
   const [searchText, setSearchText] = useState(initialSearch);
-
   const debouncedSearchTerm = useDebounce(searchText, 500);
 
   useEffect(() => {
@@ -33,7 +27,6 @@ const DynamicTable = ({ config }: DynamicTableProps) => {
       searchParams.delete('search');
     }
     setSearchParams(searchParams);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchTerm]); 
 
   const handleFilterChange = (filterName: string, value: any) => {
@@ -87,9 +80,7 @@ const DynamicTable = ({ config }: DynamicTableProps) => {
   return (
     <Space direction="vertical" style={{ width: '100%' }} size="middle">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-        
         <Space wrap>
-          {/* Đã thêm (filter: FilterConfig) để hết báo lỗi implicit any */}
           {filterConfigs.map((filter: FilterConfig) => (
             <Select
               key={filter.name}
@@ -125,7 +116,7 @@ const DynamicTable = ({ config }: DynamicTableProps) => {
           total: total,
           showSizeChanger: true,
           pageSizeOptions: ['10', '20', '50'],
-          showTotal: (total) => `Tổng số ${total} bản ghi`,
+          showTotal: (totalValue: number) => `Tổng số ${totalValue} bản ghi`,
         }}
         scroll={{ x: 'max-content' }}
       />

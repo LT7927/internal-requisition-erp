@@ -1,13 +1,12 @@
 import { ColumnsType } from 'antd/es/table';
 
-// Khuôn mẫu cho bộ lọc
 export interface FilterConfig {
   name: string;         
   placeholder?: string; 
   options: { label: string; value: string | number }[]; 
 }
 
-// Cục Config tổng để truyền vào DynamicTable
+// Khai báo cục Config tổng
 export interface TableConfig {
   apiEndpoint: string;
   columns: ColumnsType<any>;
@@ -15,6 +14,7 @@ export interface TableConfig {
   rowKey?: string;
 }
 
+// Khai báo lại Props cho DynamicTable để nó chấp nhận thuộc tính 'config'
 export interface DynamicTableProps {
-  config: TableConfig; // Nhận đúng 1 cục JSON tên là config
+  config: TableConfig; 
 }

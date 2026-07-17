@@ -16,14 +16,11 @@ export interface FormFieldConfig {
 export interface DynamicFormProps {
   fields: FormFieldConfig[];        
   schema?: ZodType<any, any, any>;  
-  
-  // [NÂNG CẤP]: Thêm cấu hình API để Form tự động gửi dữ liệu
-  apiEndpoint?: string;             // VD: '/api/categories/departments'
-  method?: 'POST' | 'PUT';          // Phương thức gửi (Tạo mới hay Cập nhật)
-  
-  onSubmit?: (data: any) => void;   // Vẫn giữ lại dự phòng nếu muốn tự xử lý
-  onSuccess?: () => void;           // Hàm chạy khi Form gọi API thành công (để đóng Modal, load lại bảng...)
-  
+  apiEndpoint?: string;             
+  method?: 'POST' | 'PUT';          
+  onSubmit?: (data: any) => void;   
+  onSuccess?: () => void;           
   submitBtnText?: string;           
+  loading?: boolean;                
   initialValues?: any;              
 }
