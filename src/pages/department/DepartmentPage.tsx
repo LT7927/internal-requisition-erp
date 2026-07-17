@@ -43,6 +43,7 @@ const DepartmentPage = () => {
     triggerTableRefresh();
   };
 
+  // --- XỬ LÝ XÓA DỮ LIỆU ---
   const handleDelete = (record: any) => {
     confirm({
       title: 'Xác nhận xóa phòng ban',
@@ -63,6 +64,7 @@ const DepartmentPage = () => {
     });
   };
 
+  // --- BƠM CỘT HÀNH ĐỘNG VÀO BẢN VẼ BẢNG ---
   const tableConfigWithActions = useMemo(() => {
     return {
       ...departmentTableConfig,
@@ -105,16 +107,18 @@ const DepartmentPage = () => {
         <DynamicTable config={tableConfigWithActions} />
       </Card>
 
+      {/* HỘP THOẠI THÊM / SỬA */}
       <Modal
         title={modalMode === 'create' ? 'THÊM PHÒNG BAN MỚI' : 'CẬP NHẬT PHÒNG BAN'}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
-        footer={null}
-        destroyOnClose 
+        footer={null} // Tắt nút mặc định vì DynamicForm đã có nút Lưu
+        destroyOnClose // Rất quan trọng: Xóa rác của Form khi đóng hộp thoại
       >
         <DynamicForm 
           fields={departmentFormFields}
           schema={departmentSchema}
+          // Chuyển đổi API động dựa theo chế độ Thêm hay Sửa
           apiEndpoint={modalMode === 'create' ? DEPARTMENT_API : `${DEPARTMENT_API}/${selectedRecord?.id}`}
           method={modalMode === 'create' ? 'POST' : 'PUT'}
           initialValues={selectedRecord}
@@ -123,6 +127,7 @@ const DepartmentPage = () => {
         />
       </Modal>
 
+      {/* NGĂN KÉO XEM CHI TIẾT */}
       <Drawer
         title="CHI TIẾT PHÒNG BAN"
         placement="right"
