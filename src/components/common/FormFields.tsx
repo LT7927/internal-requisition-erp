@@ -24,13 +24,30 @@ export const FormFieldRenderer = ({ fieldConfig, control }: FieldRendererProps) 
         setIsLoading(true);
         try {
           const res: any = await axiosClient.get(apiEndpoint);
-          const data = res.data?.data || res.data || res;
           
-          if (Array.isArray(data)) {
-            setDynamicOptions(data.map((item: any) => ({
-              label: item.name || item.title || item.code || 'Không tên', 
+          const resData = res.data || res;
+          let items: any[] = [];
+          
+          const targetObject = (resData?.data && typeof resData.data === 'object' && !Array.isArray(resData.data))
+            ? resData.data
+            : resData;
+
+          if (Array.isArray(targetObject)) {
+            items = targetObject;
+          } else if (targetObject && typeof targetObject === 'object') {
+            const arrayKey = Object.keys(targetObject).find(key => Array.isArray(targetObject[key]));
+            if (arrayKey) {
+              items = targetObject[arrayKey];
+            }
+          }
+
+          if (items.length > 0) {
+            setDynamicOptions(items.map((item: any) => ({
+              label: item.name || item.full_name || item.title || item.code || 'Không tên', 
               value: item.id || item.code
             })));
+          } else {
+            console.warn(`FormFields: Không móc được mảng dữ liệu cho ô ${name} từ API ${apiEndpoint}`);
           }
         } catch (error) {
           console.error(`Lỗi tải dữ liệu cho ô ${name}:`, error);

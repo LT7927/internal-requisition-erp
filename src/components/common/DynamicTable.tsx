@@ -8,15 +8,18 @@ import useDebounce from '../../hooks/useDebounce';
 
 const DynamicTable = ({ config }: DynamicTableProps) => {
   const { apiEndpoint, columns, filterConfigs = [], rowKey = 'id' } = config;
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [total, setTotal] = useState<number>(0);
 
   const currentPage = Number(searchParams.get('page')) || 1;
-  const pageSize = Number(searchParams.get('limit')) || 10;  
+  const pageSize = Number(searchParams.get('limit')) || 10;
+  
   const initialSearch = searchParams.get('search') || '';
   const [searchText, setSearchText] = useState(initialSearch);
+
   const debouncedSearchTerm = useDebounce(searchText, 500);
 
   useEffect(() => {
@@ -27,6 +30,7 @@ const DynamicTable = ({ config }: DynamicTableProps) => {
       searchParams.delete('search');
     }
     setSearchParams(searchParams);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchTerm]); 
 
   const handleFilterChange = (filterName: string, value: any) => {
@@ -56,20 +60,51 @@ const DynamicTable = ({ config }: DynamicTableProps) => {
 
         const response: any = await axiosClient.get(apiEndpoint, { params });
         
-        const items = response.data?.data || response.data || response;
-        const totalItems = response.data?.pagination?.totalItems || response.pagination?.totalItems || items.length;
+        const resData = response.data || response;
+        let items: any[] = [];
+        let totalItems = 0;
+
+        // Xác định tầng cần quét (Quét thẳng ở ngoài hay phải chui vào trong biến 'data')
+        const targetObject = (resData?.data && typeof resData.data === 'object' && !Array.isArray(resData.data))
+          ? resData.data
+          : resData;
+
+        // Bắt đầu quét tóm gọn mảng dữ liệu
+        if (Array.isArray(targetObject)) {
+          // API trả về mảng trực tiếp
+          items = targetObject;
+          totalItems = items.length;
+        } else if (targetObject && typeof targetObject === 'object') {
+          // Quét toàn bộ các keys trong object, thấy cái nào là Array thì đó chính là dữ liệu!
+          const arrayKey = Object.keys(targetObject).find(key => Array.isArray(targetObject[key]));
+          
+          if (arrayKey) {
+            items = targetObject[arrayKey]; // Lôi mảng users ra
+            // Tìm số tổng cộng để phân trang (Hỗ trợ quét nhiều kiểu trả về khác nhau)
+            totalItems = targetObject.pagination?.total 
+                      || targetObject.pagination?.totalItems 
+                      || targetObject.total 
+                      || items.length;
+          }
+        }
+
+        if (items.length === 0) {
+          console.warn("DynamicTable: Không tìm thấy dữ liệu hoặc mảng rỗng!", resData);
+        }
 
         setData(items);
         setTotal(totalItems);
       } catch (error) {
         console.error('Lỗi khi tải dữ liệu bảng:', error);
+        setData([]);
+        setTotal(0);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [apiEndpoint, searchParams]); 
+  }, [apiEndpoint, searchParams]);
 
   const handleTableChange = (pagination: any) => {
     searchParams.set('page', pagination.current.toString());
@@ -78,7 +113,7 @@ const DynamicTable = ({ config }: DynamicTableProps) => {
   };
 
   return (
-    <Space direction="vertical" style={{ width: '100%' }} size="middle">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <Space wrap>
           {filterConfigs.map((filter: FilterConfig) => (
@@ -120,7 +155,7 @@ const DynamicTable = ({ config }: DynamicTableProps) => {
         }}
         scroll={{ x: 'max-content' }}
       />
-    </Space>
+    </div>
   );
 };
 
