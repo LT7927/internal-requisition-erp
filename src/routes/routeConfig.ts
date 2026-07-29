@@ -5,6 +5,7 @@ import ForbiddenPage from '../pages/errors/ForbiddenPage';
 import ServerErrorPage from '../pages/errors/ServerErrorPage';
 import DepartmentPage from '../pages/department/DepartmentPage';
 import UserPage from '../pages/user/UserPage';
+import TypePage from '../pages/type/TypePage';
 
 // Component tạm thời (Mock) cho các trang ở Bước 5 & 6
 const MyRequisitions = () => React.createElement('div', null, 'Giao diện Danh sách yêu cầu của tôi (Đang xây dựng)');
@@ -36,5 +37,6 @@ export const routeConfig: LayoutRouteConfig = {
     { path: '/approvals/pending', component: PendingApprovals, allowedRoles: ['Manager', 'Admin'] },
     { path: '/categories/departments', component: DepartmentPage, allowedRoles: ['Admin'] },
     { path: '/user', component: UserPage },
+    { path: '/types', component: TypePage },
   ]
 };
