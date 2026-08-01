@@ -1,14 +1,15 @@
 import React from 'react';
 import LoginPage from '../pages/auth/LoginPage';
-import NotFoundPage from '../pages/errors/NotFoundPage';
-import ForbiddenPage from '../pages/errors/ForbiddenPage';
-import ServerErrorPage from '../pages/errors/ServerErrorPage';
+// import NotFoundPage from '../pages/errors/NotFoundPage';
+// import ForbiddenPage from '../pages/errors/ForbiddenPage';
+// import ServerErrorPage from '../pages/errors/ServerErrorPage';
 import DepartmentPage from '../pages/department/DepartmentPage';
 import UserPage from '../pages/user/UserPage';
 import TypePage from '../pages/type/TypePage';
+import RequisitionPage from '../pages/requisition/RequisitionPage';
 
 // Component tạm thời (Mock) cho các trang ở Bước 5 & 6
-const MyRequisitions = () => React.createElement('div', null, 'Giao diện Danh sách yêu cầu của tôi (Đang xây dựng)');
+// const MyRequisitions = () => React.createElement('div', null, 'Giao diện Danh sách yêu cầu của tôi (Đang xây dựng)');
 const PendingApprovals = () => React.createElement('div', null, 'Giao diện Chờ duyệt (Đang xây dựng)');
 // const DepartmentManagement = () => React.createElement('div', null, 'Giao diện Quản lý phòng ban (Đang xây dựng)');
 
@@ -33,10 +34,10 @@ export const routeConfig: LayoutRouteConfig = {
   
   // 2. Các tuyến đường bắt buộc đăng nhập (Nằm trong MainLayout)
   protectedRoutes: [
-    { path: '/requisitions/my', component: MyRequisitions },
     { path: '/approvals/pending', component: PendingApprovals, allowedRoles: ['Manager', 'Admin'] },
     { path: '/categories/departments', component: DepartmentPage, allowedRoles: ['Admin'] },
     { path: '/user', component: UserPage },
     { path: '/types', component: TypePage },
+    { path: '/requisitions/my', component: RequisitionPage },
   ]
 };
