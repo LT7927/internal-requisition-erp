@@ -7,11 +7,7 @@ import DepartmentPage from '../pages/department/DepartmentPage';
 import UserPage from '../pages/user/UserPage';
 import TypePage from '../pages/type/TypePage';
 import RequisitionPage from '../pages/requisition/RequisitionPage';
-
-// Component tạm thời (Mock) cho các trang ở Bước 5 & 6
-// const MyRequisitions = () => React.createElement('div', null, 'Giao diện Danh sách yêu cầu của tôi (Đang xây dựng)');
-const PendingApprovals = () => React.createElement('div', null, 'Giao diện Chờ duyệt (Đang xây dựng)');
-// const DepartmentManagement = () => React.createElement('div', null, 'Giao diện Quản lý phòng ban (Đang xây dựng)');
+import ApprovalPage from '../pages/approval/ApprovalPage';
 
 // Định nghĩa kiểu dữ liệu cho một Tuyến đường
 export interface RouteItem {
@@ -27,17 +23,17 @@ export interface LayoutRouteConfig {
 
 // Bảng cấu hình tập trung cho toàn bộ ứng dụng
 export const routeConfig: LayoutRouteConfig = {
-  // 1. Các tuyến đường không cần đăng nhập (Nằm trong AuthLayout)
+  // 1. Các tuyến đường không cần đăng nhập
   publicRoutes: [
     { path: '/login', component: LoginPage }
   ],
   
-  // 2. Các tuyến đường bắt buộc đăng nhập (Nằm trong MainLayout)
+  // 2. Các tuyến đường bắt buộc đăng nhập
   protectedRoutes: [
-    { path: '/approvals/pending', component: PendingApprovals, allowedRoles: ['Manager', 'Admin'] },
     { path: '/categories/departments', component: DepartmentPage, allowedRoles: ['Admin'] },
     { path: '/user', component: UserPage },
     { path: '/types', component: TypePage },
     { path: '/requisitions/my', component: RequisitionPage },
+    { path: '/approvals/pending', component: ApprovalPage },
   ]
 };
