@@ -79,10 +79,10 @@ export const userTableConfig: TableConfig = {
 
 // Form Đặt lại mật khẩu
 export const resetPasswordSchema = z.object({
-  new_password: z.string().min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự'),
+  newPassword: z.string().min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự'),
 });
 
 // Cấu hình Form Đặt lại mật khẩu
 export const resetPasswordFields: FormFieldConfig[] = [
-  { name: 'new_password', label: 'Mật khẩu mới', type: 'password', placeholder: 'Nhập mật khẩu mới cho nhân viên này...', span: 24 }
+  { name: 'newPassword', label: 'Mật khẩu mới', type: 'password', placeholder: 'Nhập mật khẩu mới cho nhân viên này...', span: 24 }
 ];

@@ -65,10 +65,8 @@ const LoginPage = () => {
           <Typography.Text type="secondary">Đăng nhập để quản lý yêu cầu mua sắm</Typography.Text>
         </div>
 
-        {/* Chú ý: initialValues đã được set sẵn */}
         <Form name="login_form" onFinish={onFinish} layout="vertical" size="large" initialValues={{ remember: true }}>
           
-          {/* QUAN TRỌNG: name="username" phải khớp 100% */}
           <Form.Item
             name="username"
             rules={[{ required: true, message: 'Vui lòng nhập Tài khoản!' }]}

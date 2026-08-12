@@ -1,13 +1,11 @@
 import React from 'react';
 import LoginPage from '../pages/auth/LoginPage';
-// import NotFoundPage from '../pages/errors/NotFoundPage';
-// import ForbiddenPage from '../pages/errors/ForbiddenPage';
-// import ServerErrorPage from '../pages/errors/ServerErrorPage';
 import DepartmentPage from '../pages/department/DepartmentPage';
 import UserPage from '../pages/user/UserPage';
 import TypePage from '../pages/type/TypePage';
 import RequisitionPage from '../pages/requisition/RequisitionPage';
 import ApprovalPage from '../pages/approval/ApprovalPage';
+import DashboardPage from '../pages/dashboard/DashboardPage';
 
 // Định nghĩa kiểu dữ liệu cho một Tuyến đường
 export interface RouteItem {
@@ -30,6 +28,7 @@ export const routeConfig: LayoutRouteConfig = {
   
   // 2. Các tuyến đường bắt buộc đăng nhập
   protectedRoutes: [
+    { path: '/dashboard', component: DashboardPage, allowedRoles: ['ADMIN', 'MANAGER'] },
     { path: '/categories/departments', component: DepartmentPage, allowedRoles: ['Admin'] },
     { path: '/user', component: UserPage },
     { path: '/types', component: TypePage },

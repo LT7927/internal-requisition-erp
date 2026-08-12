@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Card, Button, Space, Tooltip, Modal, Drawer, Descriptions, message, Tag } from 'antd';
+import { Card, Button, Space, Tooltip, Modal, Drawer, Descriptions, message, Tag, Row, Col, Statistic } from 'antd';
 import { PlusOutlined, EditOutlined, EyeOutlined, ExclamationCircleOutlined, KeyOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import DynamicTable from '../../components/common/DynamicTable';
 import DynamicForm from '../../components/common/DynamicForm';
 import axiosClient from '../../utils/axiosClient';
-import { userTableConfig, userFormFields, userSchema, USER_API, resetPasswordFields, resetPasswordSchema } from './userConfig';
+import { userTableConfig,  userFormFields,  userSchema,  USER_API, resetPasswordFields, resetPasswordSchema } from './userConfig';
 
 const { confirm } = Modal;
 
@@ -17,8 +17,9 @@ const UserPage = () => {
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [isResetModalVisible, setIsResetModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
-
-  const currentUserRole = 'MANAGER';
+  
+  const userData = JSON.parse(localStorage.getItem('user') || '{}');
+  const currentUserRole = userData?.role || 'ADMIN'; 
 
   // Xử lý mở giao diện
   const handleCreateNew = () => {
@@ -33,9 +34,16 @@ const UserPage = () => {
     setIsModalVisible(true);
   };
 
-  const handleView = (record: any) => {
-    setSelectedRecord(record);
-    setIsDrawerVisible(true);
+  const handleView = async (record: any) => {
+    try {
+      const res: any = await axiosClient.get(`${USER_API}/${record.id}`);
+      const data = res.data?.data || res.data;
+      setSelectedRecord(data);
+      setIsDrawerVisible(true);
+    } catch (error) {
+      setSelectedRecord(record);
+      setIsDrawerVisible(true);
+    }
   };
 
   const handleOpenResetPassword = (record: any) => {
@@ -56,8 +64,7 @@ const UserPage = () => {
 
   // Hàm xử lý đóng mở tài khoản
   const handleToggleStatus = (record: any) => {
-    // Xác định hành động dựa trên trạng thái hiện tại
-    const isCurrentlyActive = record.is_active === 1;
+    const isCurrentlyActive = record.is_active === true || record.is_active === 1;
     const actionText = isCurrentlyActive ? 'Khóa' : 'Mở khóa';
 
     confirm({
@@ -69,11 +76,19 @@ const UserPage = () => {
       cancelText: 'Hủy',
       async onOk() {
         try {
-          // Gửi API cập nhật lại trạng thái (Đảo ngược 1 -> 0 hoặc 0 -> 1)
-          await axiosClient.put(`${USER_API}/${record.id}`, {
-            ...record, // Gửi kèm dữ liệu cũ để tránh Backend bắt lỗi thiếu trường
-            is_active: isCurrentlyActive ? 0 : 1 
-          });
+          if (isCurrentlyActive) {
+            // Khi khoá: Gọi phương thức DELETE
+            await axiosClient.delete(`${USER_API}/${record.id}`);
+          } else {
+            // Khi MỞ khoá: Gọi phương thức PUT để kích hoạt lại
+            await axiosClient.put(`${USER_API}/${record.id}`, {
+              email: record.email,
+              full_name: record.full_name,
+              role: record.role,
+              department_id: record.department_id,
+              is_active: true
+            });
+          }
           
           message.success(`${actionText} tài khoản thành công!`);
           triggerTableRefresh();
@@ -95,11 +110,14 @@ const UserPage = () => {
           dataIndex: 'is_active',
           key: 'is_active',
           align: 'center' as const,
-          render: (isActive: number) => (
-            <Tag color={isActive === 1 ? 'success' : 'error'}>
-              {isActive === 1 ? 'Hoạt động' : 'Đã khóa'}
-            </Tag>
-          )
+          render: (isActive: any) => {
+            const active = isActive === true || isActive === 1;
+            return (
+              <Tag color={active ? 'success' : 'error'}>
+                {active ? 'Hoạt động' : 'Đã khóa'}
+              </Tag>
+            );
+          }
         },
         {
           title: 'Hành động',
@@ -122,12 +140,12 @@ const UserPage = () => {
               )}
 
               {/* Nút Khóa / Mở Khóa Động */}
-              <Tooltip title={record.is_active === 1 ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}>
+              <Tooltip title={record.is_active === true || record.is_active === 1 ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}>
                 <Button 
                   type="text" 
-                  icon={record.is_active === 1 ? <LockOutlined /> : <UnlockOutlined />} 
-                  danger={record.is_active === 1} // Nút màu đỏ nếu đang hoạt động
-                  style={record.is_active !== 1 ? { color: '#52c41a' } : {}} // Nút màu xanh nếu đang khóa
+                  icon={record.is_active === true || record.is_active === 1 ? <LockOutlined /> : <UnlockOutlined />} 
+                  danger={record.is_active === true || record.is_active === 1}
+                  style={record.is_active !== true && record.is_active !== 1 ? { color: '#52c41a' } : {}}
                   onClick={() => handleToggleStatus(record)} 
                 />
               </Tooltip>
@@ -183,7 +201,7 @@ const UserPage = () => {
           fields={resetPasswordFields}
           schema={resetPasswordSchema}
           apiEndpoint={`${USER_API}/${selectedRecord?.id}/reset-password`}
-          method="PUT"
+          method="POST"
           onSuccess={handleFormSuccess}
           submitBtnText="Xác nhận đổi mật khẩu"
         />
@@ -198,30 +216,49 @@ const UserPage = () => {
         size="default"
       >
         {selectedRecord && (
-          <Descriptions column={1} bordered size="middle">
-            <Descriptions.Item label="Họ và Tên" labelStyle={{ width: '130px', fontWeight: 'bold' }}>
-              {selectedRecord.full_name}
-            </Descriptions.Item>
-            <Descriptions.Item label="Tên đăng nhập" labelStyle={{ fontWeight: 'bold' }}>
-              {selectedRecord.username}
-            </Descriptions.Item>
-            <Descriptions.Item label="Email đăng nhập" labelStyle={{ fontWeight: 'bold' }}>
-              {selectedRecord.email}
-            </Descriptions.Item>
-            <Descriptions.Item label="Chức vụ" labelStyle={{ fontWeight: 'bold' }}>
-              <Tag color={selectedRecord.role === 'ADMIN' ? 'red' : selectedRecord.role === 'MANAGER' ? 'blue' : 'green'}>
-                {selectedRecord.role}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Phòng ban" labelStyle={{ fontWeight: 'bold' }}>
-              {selectedRecord.department_name || 'Chưa điều phối'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái" labelStyle={{ fontWeight: 'bold' }}>
-              <Tag color={selectedRecord.is_active === 1 ? 'success' : 'error'}>
-                {selectedRecord.is_active === 1 ? 'Đang hoạt động' : 'Đã khóa'}
-              </Tag>
-            </Descriptions.Item>
-          </Descriptions>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <Descriptions column={1} bordered size="middle">
+              <Descriptions.Item label="Họ và Tên" labelStyle={{ width: '130px', fontWeight: 'bold' }}>
+                {selectedRecord.full_name}
+              </Descriptions.Item>
+              <Descriptions.Item label="Tên đăng nhập" labelStyle={{ fontWeight: 'bold' }}>
+                {selectedRecord.username}
+              </Descriptions.Item>
+              <Descriptions.Item label="Email đăng nhập" labelStyle={{ fontWeight: 'bold' }}>
+                {selectedRecord.email}
+              </Descriptions.Item>
+              <Descriptions.Item label="Chức vụ" labelStyle={{ fontWeight: 'bold' }}>
+                <Tag color={selectedRecord.role === 'ADMIN' ? 'red' : selectedRecord.role === 'MANAGER' ? 'blue' : 'green'}>
+                  {selectedRecord.role}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Phòng ban" labelStyle={{ fontWeight: 'bold' }}>
+                {selectedRecord.department_name || 'Chưa điều phối'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái" labelStyle={{ fontWeight: 'bold' }}>
+                <Tag color={selectedRecord.is_active === true || selectedRecord.is_active === 1 ? 'success' : 'error'}>
+                  {selectedRecord.is_active === true || selectedRecord.is_active === 1 ? 'Đang hoạt động' : 'Đã khóa'}
+                </Tag>
+              </Descriptions.Item>
+            </Descriptions>
+
+            {/* Hiển thị thống kê */}
+            {selectedRecord.requisition_stats && (
+              <Card title="Thống Kê Yêu Cầu" size="small" type="inner">
+                <Row gutter={16} style={{ textAlign: 'center' }}>
+                  <Col span={8}>
+                    <Statistic title="Tổng số" value={selectedRecord.requisition_stats.total_requisitions} />
+                  </Col>
+                  <Col span={8}>
+                    <Statistic title="Đã duyệt" value={selectedRecord.requisition_stats.approved} valueStyle={{ color: '#3f8600' }} />
+                  </Col>
+                  <Col span={8}>
+                    <Statistic title="Đang chờ" value={selectedRecord.requisition_stats.pending} valueStyle={{ color: '#faad14' }} />
+                  </Col>
+                </Row>
+              </Card>
+            )}
+          </div>
         )}
       </Drawer>
     </>

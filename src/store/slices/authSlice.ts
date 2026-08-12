@@ -29,7 +29,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.accessToken = null;
       state.user = null;
-      localStorage.removeItem('refreshToken'); // Chỉ ở đây mới đụng tới LocalStorage để dọn rác
+      localStorage.removeItem('refreshToken');
     },
   },
 });

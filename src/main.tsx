@@ -6,7 +6,6 @@ import { store } from './store/store.ts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConfigProvider, App as AntdApp } from 'antd';
 
-// Khởi tạo QueryClient cho TanStack
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

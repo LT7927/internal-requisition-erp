@@ -25,7 +25,7 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// ============ TRƯỚC KHI GỬI ĐI ============
+// Trước khi gửi đi
 axiosClient.interceptors.request.use(
   (config) => {
     const token = store.getState().auth.accessToken;
@@ -37,7 +37,7 @@ axiosClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ============ SAU KHI NHẬN VỀ ============
+// Sau khi nhận về
 axiosClient.interceptors.response.use(
   (response) => response.data,
   async (error) => {
@@ -75,7 +75,7 @@ axiosClient.interceptors.response.use(
         try {
           const res = await axios.post('http://localhost:3000/api/auth/refresh', { refreshToken });
           
-          // Lấy token theo đúng chuẩn API Docs của Mentor
+          // Lấy token
           const newAccessToken = res.data.data.accessToken;
           const newRefreshToken = res.data.data.refreshToken;
 
@@ -94,7 +94,7 @@ axiosClient.interceptors.response.use(
           return axiosClient(originalRequest);
 
         } catch (refreshError) {
-          // Xin token mới thất bại (Refresh Token hết hạn) -> Xóa sạch, đuổi ra chuồng gà
+          // Xin token mới thất bại (Refresh Token hết hạn) -> Xóa sạch
           processQueue(refreshError, null);
           store.dispatch(logout());
           localStorage.removeItem('refreshToken');

@@ -26,7 +26,7 @@ function App() {
         try {
           const res = await axios.post('http://localhost:3000/api/auth/refresh', { refreshToken });
           
-          // 2. SỬA LỖI "BÚP BÊ NGA": Lấy token từ res.data.data
+          // 2. Lấy token từ res.data.data
           const newAccessToken = res.data.data?.accessToken || res.data.accessToken || res.data.data?.token || res.data.token;
           const newRefreshToken = res.data.data?.refreshToken || res.data.refreshToken;
 
