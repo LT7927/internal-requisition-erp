@@ -17,9 +17,9 @@ export const userSchema = z.object({
 
 // Cấu hình Form 
 export const userFormFields: FormFieldConfig[] = [
-  { name: 'username', label: 'Tên đăng nhập (Username)', type: 'text', placeholder: 'VD: nguyenvan_a', span: 12 },
+  { name: 'username', label: 'Tên đăng nhập (Username)', type: 'text', placeholder: 'Nhập tên đăng nhập', span: 12 },
   { name: 'password', label: 'Mật khẩu (Chỉ nhập khi tạo mới)', type: 'password', placeholder: 'Nhập mật khẩu...', span: 12 },
-  { name: 'email', label: 'Email đăng nhập', type: 'email', placeholder: 'VD: nguyenvan@erp.com', span: 12 },
+  { name: 'email', label: 'Email đăng nhập', type: 'email', placeholder: 'Nhập email', span: 12 },
   { name: 'full_name', label: 'Họ và tên', type: 'text', placeholder: 'Nhập họ và tên đầy đủ...', span: 12 },
   { 
     name: 'role', 

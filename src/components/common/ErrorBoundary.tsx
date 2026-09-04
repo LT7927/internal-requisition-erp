@@ -1,13 +1,9 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { Result, Button } from 'antd';
 
-interface Props {
-  children?: ReactNode;
-}
+interface Props { children?: ReactNode; }
 
-interface State {
-  hasError: boolean;
-}
+interface State { hasError: boolean; }
 
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {

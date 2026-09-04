@@ -14,8 +14,8 @@ export const typeSchema = z.object({
 
 // Cấu hình Form
 export const typeFormFields: FormFieldConfig[] = [
-  { name: 'code', label: 'Mã loại chi phí', type: 'text', placeholder: 'VD: WARRANTY, TRAVEL...', span: 12 },
-  { name: 'name', label: 'Tên loại chi phí', type: 'text', placeholder: 'VD: Chi phí bảo hành', span: 12 },
+  { name: 'code', label: 'Mã loại chi phí', type: 'text', placeholder: 'Nhập mã loại chi phí', span: 12 },
+  { name: 'name', label: 'Tên loại chi phí', type: 'text', placeholder: 'Nhập tên loại chi phí', span: 12 },
   { name: 'description', label: 'Mô tả chi tiết', type: 'textarea', placeholder: 'Nhập thông tin mô tả chi tiết...', span: 24 }
 ];
 

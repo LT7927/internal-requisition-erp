@@ -8,16 +8,16 @@ export const MY_REQUISITIONS_API = `${API_BASE_URL}/requisitions/my`;
 
 // Kiểm duyệt Form Validate
 export const requisitionSchema = z.object({
-    title: z.string().min(5, 'Tiêu đề yêu cầu phải có ít nhất 5 ký tự'),
-    description: z.string().min(10, 'Vui lòng mô tả chi tiết yêu cầu (ít nhất 10 ký tự)'),
-    type_id: z.coerce.number({ message: "Vui lòng chọn loại chi phí" }).min(1, 'Vui lòng chọn loại chi phí'),
-    amount: z.coerce.number({ message: "Vui lòng nhập số tiền" }).min(1000, 'Số tiền tối thiểu là 1,000'),
-    currency: z.string().default('VND'),
+  title: z.string({ message: "Vui lòng nhập tiêu đề yêu cầu" }).min(1, "Vui lòng nhập tiêu đề yêu cầu"),
+  description: z.string({ message: "Vui lòng nhập mô tả chi tiết" }).min(1, "Vui lòng nhập mô tả chi tiết"),
+  type_id: z.number({ message: "Vui lòng chọn loại chi phí" }),
+  amount: z.number({ message: "Vui lòng nhập số tiền" }).min(1000, "Số tiền tối thiểu là 1,000 VND"),
+  currency: z.string().default("VND"),
 });
 
 // Cấu hình Form 
 export const requisitionFormFields: FormFieldConfig[] = [
-  { name: 'title', label: 'Tiêu đề Yêu cầu', type: 'text', placeholder: 'VD: Mua laptop mới cho nhân viên...', span: 24 },
+  { name: 'title', label: 'Tiêu đề Yêu cầu', type: 'text', placeholder: 'Nhập tiêu đề yêu cầu', span: 24 },
   { 
     name: 'type_id', 
     label: 'Phân loại chi phí', 
@@ -26,7 +26,7 @@ export const requisitionFormFields: FormFieldConfig[] = [
     placeholder: 'Chọn loại chi phí...', 
     span: 12 
   },
-  { name: 'amount', label: 'Số tiền dự kiến', type: 'number', placeholder: 'VD: 60000000', span: 8 },
+  { name: 'amount', label: 'Số tiền dự kiến', type: 'number', placeholder: 'Nhập số tiền', span: 8 },
   { 
     name: 'currency', 
     label: 'Loại tiền', 

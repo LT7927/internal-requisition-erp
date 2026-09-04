@@ -71,14 +71,14 @@ const LoginPage = () => {
             name="username"
             rules={[{ required: true, message: 'Vui lòng nhập Tài khoản!' }]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Tài khoản đăng nhập (VD: admin)" />
+            <Input prefix={<UserOutlined />} placeholder="Tài khoản đăng nhập" />
           </Form.Item>
 
           <Form.Item
             name="password"
             rules={[{ required: true, message: 'Vui lòng nhập Mật khẩu!' }]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu (VD: password123)" />
+            <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />
           </Form.Item>
 
           <Form.Item name="remember" valuePropName="checked">

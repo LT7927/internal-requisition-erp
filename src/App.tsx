@@ -1,15 +1,17 @@
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
-import { Spin } from 'antd';
+import { Spin, ConfigProvider, theme } from 'antd';
 import AppRouter from './routes/AppRouter';
 import { setCredentials, logout } from './store/slices/authSlice';
+import { RootState } from './store/store';
 import './App.css';
 
 function App() {
   const dispatch = useDispatch();
   const [isInitializing, setIsInitializing] = useState(true);
+  const { mode } = useSelector((state: RootState) => state.theme);
   
   // 1. Khai báo cờ khóa để chặn Strict Mode gọi 2 lần
   const isMounted = useRef(false); 
@@ -50,13 +52,23 @@ function App() {
   }, [dispatch]);
 
   if (isInitializing) {
-    return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}><Spin size="large" /></div>;
+    return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: mode === 'dark' ? '#000' : '#fff' }}><Spin size="large" /></div>;
   }
 
   return (
-    <BrowserRouter>
-      <AppRouter />
-    </BrowserRouter>
+    <ConfigProvider
+      theme={{
+        algorithm: mode === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#1677ff',
+          borderRadius: 6,
+        },
+      }}
+    >
+      <BrowserRouter>
+        <AppRouter />
+      </BrowserRouter>
+    </ConfigProvider>
   );
 }
 

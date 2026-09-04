@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Card, Button, Space, Tooltip, Modal, Drawer, Descriptions, message, Tag, Input, Timeline } from 'antd';
+import { Card, Button, Space, Tooltip, Modal, Drawer, Descriptions, message, Tag, Input, Timeline, Tabs, Empty } from 'antd'; 
 import { EyeOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import DynamicTable from '../../components/common/DynamicTable';
@@ -9,6 +9,8 @@ import API_BASE_URL from '../../api';
 
 const ApprovalPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const [activeTab, setActiveTab] = useState('pending');
 
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
@@ -36,6 +38,7 @@ const ApprovalPage = () => {
       setApprovalHistory(Array.isArray(historyData) ? historyData : []);
     } catch (error) {
       console.error('Không thể lấy lịch sử duyệt:', error);
+      message.error('Không thể tải lịch sử phê duyệt');
     }
   };
 
@@ -46,7 +49,7 @@ const ApprovalPage = () => {
     setIsActionModalVisible(true);
   };
 
-  // gọi api duyệt từ chối
+  // gọi api duyệt/từ chối
   const submitApprovalAction = async () => {
     if (actionType === 'reject' && !comments.trim()) {
       message.warning('Vui lòng nhập lý do từ chối!');
@@ -77,13 +80,18 @@ const ApprovalPage = () => {
   };
 
   const renderStatusTag = (status: string) => {
-    if (status === 'PENDING_MANAGER') return <Tag color="orange">Chờ Quản lý duyệt</Tag>;
-    if (status === 'PENDING_ADMIN') return <Tag color="geekblue">Chờ Admin duyệt</Tag>;
-    return <Tag>{status}</Tag>;
+    switch (status) {
+      case 'PENDING_MANAGER': return <Tag color="orange">Chờ Quản lý duyệt</Tag>;
+      case 'PENDING_ADMIN': return <Tag color="geekblue">Chờ Admin duyệt</Tag>;
+      case 'APPROVED': return <Tag color="green">Đã phê duyệt</Tag>;
+      case 'REJECTED': return <Tag color="red">Bị từ chối</Tag>;
+      case 'CANCELLED': return <Tag color="default">Đã hủy</Tag>;
+      default: return <Tag>{status}</Tag>;
+    }
   };
 
-  // Cấu hình bảng
-  const tableConfigWithActions = useMemo(() => {
+  // Màn hình hiển thi xử lý yêu cầu
+  const pendingConfig = useMemo(() => {
     return {
       ...approvalTableConfig,
       columns: [
@@ -118,10 +126,66 @@ const ApprovalPage = () => {
     };
   }, []);
 
+  // Màn hình hiển thị lịch sử phê duyệt
+  const historyConfig = useMemo(() => {
+    return {
+      ...approvalTableConfig,
+      apiEndpoint: `${API_BASE_URL}/requisitions`,
+      filterConfigs: [
+        {
+          name: 'status',
+          placeholder: 'Lọc theo trạng thái',
+          options: [
+            { label: 'Đã phê duyệt', value: 'APPROVED' },
+            { label: 'Bị từ chối', value: 'REJECTED' },
+            { label: 'Đã hủy', value: 'CANCELLED' }
+          ]
+        }
+      ],
+      columns: [
+        ...approvalTableConfig.columns,
+        {
+          title: 'Trạng thái',
+          dataIndex: 'status',
+          key: 'status',
+          align: 'center' as const,
+          render: (status: string) => renderStatusTag(status)
+        },
+        {
+          title: 'Hành động',
+          key: 'actions',
+          width: 100,
+          align: 'center' as const,
+          render: (_: any, record: any) => (
+            <Tooltip title="Xem lịch sử chi tiết">
+              <Button type="primary" ghost icon={<EyeOutlined />} onClick={() => handleView(record)}>Chi tiết</Button>
+            </Tooltip>
+          ),
+        },
+      ],
+    };
+  }, []);
+
   return (
     <>
-      <Card title="PHÊ DUYỆT YÊU CẦU" style={{ borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-        <DynamicTable config={tableConfigWithActions} />
+      <Card title="PHÊ DUYỆT YÊU CẦU" style={{ borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '0 24px 24px' }}>
+        <Tabs 
+          activeKey={activeTab} 
+          onChange={setActiveTab}
+          size="large"
+          items={[
+            {
+              key: 'pending',
+              label: <span style={{ fontWeight: 'bold' }}>⏳ VIỆC CẦN XỬ LÝ</span>,
+              children: <DynamicTable config={pendingConfig} />
+            },
+            {
+              key: 'history',
+              label: <span>📚 LỊCH SỬ & TRA CỨU</span>,
+              children: <DynamicTable config={historyConfig} />
+            }
+          ]}
+        />
       </Card>
 
       {/* Form xử lý phê duyệt - từ chối */}
@@ -168,6 +232,9 @@ const ApprovalPage = () => {
               <Descriptions.Item label="Tiêu đề" span={2} labelStyle={{ fontWeight: 'bold' }}>
                 {selectedRecord.title}
               </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái" span={2} labelStyle={{ fontWeight: 'bold' }}>
+                {renderStatusTag(selectedRecord.status)}
+              </Descriptions.Item>
               <Descriptions.Item label="Loại chi phí" labelStyle={{ fontWeight: 'bold' }}>
                 {selectedRecord.type_name}
               </Descriptions.Item>
@@ -182,8 +249,8 @@ const ApprovalPage = () => {
             </Descriptions>
 
             {/* Lịch sử phê duyệt */}
-            {approvalHistory.length > 0 && (
-              <Card title="LỊCH SỬ XỬ LÝ" size="small" type="inner">
+            <Card title="LỊCH SỬ XỬ LÝ & LUÂN CHUYỂN" size="small" type="inner">
+              {approvalHistory.length > 0 ? (
                 <Timeline style={{ marginTop: 16 }}>
                   {approvalHistory.map((log: any) => (
                     <Timeline.Item key={log.id} color={log.action === 'APPROVED' ? 'green' : 'red'}>
@@ -199,8 +266,13 @@ const ApprovalPage = () => {
                     </Timeline.Item>
                   ))}
                 </Timeline>
-              </Card>
-            )}
+              ) : (
+                <Empty 
+                  image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                  description="Phiếu này chưa được xử lý qua cấp nào" 
+                />
+              )}
+            </Card>
           </div>
         )}
       </Drawer>
